@@ -156,21 +156,22 @@ rm tmpfile
 ## Create the Cloudbuild file and add it to the git repsoitory
 
 1. Create the cloudbuild.yaml file
-
-    cat <<CLOUDBUILD_FILE>cloudbuild.yaml
-    steps:
-    - id: install_packages
-      name: 'gcr.io/cloud-builders/npm'
-      args: ['install']
-    - id: prerender_browser_files
-      name: 'gcr.io/cloud-builders/npm'
-      args: ['build:prerender']
-      waitFor: install_packages
-    - id: copy_prerendered_files
-      name: 'gcr.io/cloud-builders/gsutil'
-      args: ['cp','-r','dist/browser/*', '${_ANGULAR_APP_BUCKET_PATH}']
-      waitFor: prerender_browser_files
-    CLOUDBUILD_FILE
+```
+cat <<CLOUDBUILD_FILE>cloudbuild.yaml
+steps:
+- id: install_packages
+    name: 'gcr.io/cloud-builders/npm'
+    args: ['install']
+- id: prerender_browser_files
+    name: 'gcr.io/cloud-builders/npm'
+    args: ['build:prerender']
+    waitFor: install_packages
+- id: copy_prerendered_files
+    name: 'gcr.io/cloud-builders/gsutil'
+    args: ['cp','-r','dist/browser/*', '${_ANGULAR_APP_BUCKET_PATH}']
+    waitFor: prerender_browser_files
+CLOUDBUILD_FILE
+```
 
 2. Add and commit it to the git repository.
     git add cloudbuild.yaml && git commit -m "add cloudbuild.yaml"
@@ -191,24 +192,27 @@ You can create a trigger on the [build triggers page](https://console.cloud.goog
 ### Add your tour-of-heros cloud source repository as a remote repository with the name 'google'
 
 1.  (Only if not running in Cloud Shell) Set up your google credentials for git.
-
-    gcloud init && git config --global credential.https://source.developers.google.com.helper gcloud.sh
+```
+gcloud init && git config --global credential.https://source.developers.google.com.helper gcloud.sh
+```
 
 2.  Add the google cloud repo as a remote.
-
-    git remote add google \
-    https://source.developers.google.com/p/$PROJECT/r/tour-of-heros-universal
+```
+git remote add google \
+https://source.developers.google.com/p/$PROJECT/r/tour-of-heros-universal
+```
 
 ## Run the Build Trigger and Deploy the Application
 
 1.  Tag the repository
-
-    git tag v0.0
+```
+git tag v0.0
+```
 
 2.  Push the repository to google
-
-    git push google master && git push google --tags
-
+```
+git push google master && git push google --tags
+```
 
 ### Once the build and deploy finishes check that the website is deployed
 1.  Open up the [Cloud Build](https://console.cloud.google.com/cloud-build) console to show the build progress.
