@@ -160,16 +160,16 @@ rm tmpfile
 cat <<CLOUDBUILD_FILE>cloudbuild.yaml
 steps:
 - id: install_packages
-    name: 'gcr.io/cloud-builders/npm'
-    args: ['install']
+  name: 'gcr.io/cloud-builders/npm'
+  args: ['install']
 - id: prerender_browser_files
-    name: 'gcr.io/cloud-builders/npm'
-    args: ['build:prerender']
-    waitFor: install_packages
+  name: 'gcr.io/cloud-builders/npm'
+  args: ['build:prerender']
+  waitFor: install_packages
 - id: copy_prerendered_files
-    name: 'gcr.io/cloud-builders/gsutil'
-    args: ['cp','-r','dist/browser/*', '${_ANGULAR_APP_BUCKET_PATH}']
-    waitFor: prerender_browser_files
+  name: 'gcr.io/cloud-builders/gsutil'
+  args: ['cp','-r','dist/browser/*', '${_ANGULAR_APP_BUCKET_PATH}']
+  waitFor: prerender_browser_files
 CLOUDBUILD_FILE
 ```
 
