@@ -54,42 +54,67 @@ Fill in `[CONFIGURATION NAME]` with the name of hte configuration you want to us
 ## Download the Test Angular Application, Tour of Heros
 
 1. Download and unzip the test application
+```
+curl -L https://angular.io/generated/zips/universal/universal.zip > universal.zip
 
-    curl -L https://angular.io/generated/zips/universal/universal.zip > universal.zip
-    unzip universal.zip
+unzip universal.zip -d angular-app
+cd angular-app
+```
 
 1. Create a local git repo for the sample code
-
-    curl -L https://github.com/angular/angular/blob/master/.gitignore > .gitignore
-    git init
-    git add .
-    git commit -m "first"
+```
+curl -L https://github.com/angular/angular/blob/master/.gitignore > .gitignore
+git init
+git add .
+git commit -m "first"
+```
 
 ### Create a Cloud Source Repository for your copy of the test Angular Application
+    gcloud services enable sourcerepo.googleapis.com
 
     gcloud source repos create tour-of-heros-universal
 
 ### Make prerender changes to the angular application
 
 1. Download the webpack prerender config file.
-    curl -L https://github.com/GoogleCloudPlatform/community/raw/master/tutorials/cloudbuild-prerender-angular-universal/webpack.prerender.config.js >webpack.prerender.config.js
 
-2. Download the typescript config file for prerendering.
+     curl -L https://github.com/GoogleCloudPlatform/community/raw/master/tutorials/cloudbuild-angular-universal/webpack.prerender.config.js >webpack.prerender.config.js
+
+2. Add the prerender webpack configuration file to git
+
+     git add webpack.prerender.config.js
+
+3. Download the typescript config file for prerendering.
+
     curl -L https://github.com/GoogleCloudPlatform/community/raw/master/tutorials/cloudbuild-prerender-angular-universal/prerender.tsconfig.json >prerender.tsconfig.json
 
-3. Edit the package.json file to add the prerender steps
+4. Add the prerender typscript file to git
+
+    git add prerender.tsconfig.json
+
+5. Edit the package.json file to add the prerender steps
 ```
 read -r -d '' SCRIPT_ADDITIONS <<EOF
+{
 "build:prerender": "npm run build:client-and-server-bundles && npm run compile:prerender && npm run generate:prerender",
 "generate:prerender": "npm run webpack:prerender && node dist/prerender.js",
 "compile:prerender": "tsc -p server.tsconfig.json",
 "webpack:prerender": "webpack --config webpack.prerender.config.js"
+}
 EOF
+cat package.json | jq --argjson additions "$SCRIPT_ADDITIONS" '.scripts = .scripts+$additions' >tmpfile
+cp tmpfile package.json
+rm tmpfile
 ```
-cat package.json | jq ".scripts = .scripts+$SCRIPT_ADDITIONS" >tmp
-cp tmp package.json
-
 **Note** that jq is a tool for editing JSON and is installed in Cloudshell by default. If you are going through this tutorial on your workstation see [jq installation](https://stedolan.github.io/jq/download/) for instructions on installing jq on your workstation.
+
+6. Add the package.json changes to git
+
+    git add package.json
+
+4. Commit your changes to the git repo
+
+    git commit -m "pregenerate changes" 
 
 ### Configure a Cloud Storage Bucket and Cloud Load Balancer to host your Angular Application on Cloud CDN
 
@@ -153,7 +178,7 @@ You can create a trigger on the [build triggers page](https://console.cloud.goog
 
 ### Add your tour-of-heros cloud source repository as a remote repository with the name 'google'
 
-1.  (Only if not running in Cloud Shell) setup your google credentials for git.
+1.  (Only if not running in Cloud Shell) Set up your google credentials for git.
 
     gcloud init && git config --global credential.https://source.developers.google.com.helper gcloud.sh
 
@@ -173,15 +198,33 @@ You can create a trigger on the [build triggers page](https://console.cloud.goog
     git push google master
 
 
-## Once the build and deploy finishes check that the website is deployed
+### Once the build and deploy finishes check that the website is deployed
 1.  Open up the [Cloud Build](https://console.cloud.google.com/cloud-build) console to show the build progress.
 2.  Find the build that is in progress and click the link to view its progress.
 3.  Once the build finishes, find the IP address of the load balancer you created above
 4.Point your browser at "http://$ANGULAR_APP_IP
 
-## Add serverside pre-generation to Angular application
+### Cleanup
+1. Delete the load balancer
 
-Copy the pre-render script to your angular application.
-curl -L https://raw.githubusercontent.com/angular/universal-starter/master/prerender.ts >prerender.ts
-curl -L https://raw.githubusercontent.com/angular/universal-starter/master/server.tsconfig.json >server.tsconfig.json
+```
+gcloud compute forwarding-rules delete http-content-rule --global
+
+gcloud compute target-http-proxies delete http-lb-proxy --quiet
+
+gcloud compute url-maps delete web-map  --quiet
+
+gcloud compute addresses delete angular-app-ip --global --quiet
+```
+
+2. Delete the cloud storage bucket
+```
+gcloud compute backend-buckets delete $PROJECT-angular-app-backend --quiet
+
+gcloud rb gs://$PROJECT-angular-app
+```
+3. Delete the Cloud Source Repository
+```
+gcloud source repos delete tour-of-heros-universal --quiet
+```
 
