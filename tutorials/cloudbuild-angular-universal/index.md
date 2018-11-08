@@ -42,7 +42,7 @@ step)**
     gcloud config set compute/zone $ZONE
     gcloud config set account $ACCOUNT
 
-## Set the project variable (Skip this step if you created a new project above)
+### Set the project variable (Skip this step if you created a new project above)
 
 Ensure you are working with the project you want to use in gcloud.
 For more information on configuraitons see [configurations](https://cloud.google.com/sdk/gcloud/reference/config/configurations/).
@@ -50,6 +50,11 @@ Fill in `[CONFIGURATION NAME]` with the name of hte configuration you want to us
 
     gcloud config configurations activate [CONFIGURATION NAME] #The configuration for the project you want to use
     PROJECT=$(gcloud config get-value project)
+
+### Enable the services required for the tutorial 
+    
+    gcloud services enable sourcerepo.googleapis.com
+    gcloud services enable containerregistry.googleapis.com
 
 ## Download the Test Angular Application, Tour of Heros
 
@@ -70,7 +75,6 @@ git commit -m "first"
 ```
 
 ### Create a Cloud Source Repository for your copy of the test Angular Application
-    gcloud services enable sourcerepo.googleapis.com
 
     gcloud source repos create tour-of-heros-universal
 
@@ -78,15 +82,14 @@ git commit -m "first"
 
 1. Download the webpack prerender config file.
 
-     curl -L https://github.com/GoogleCloudPlatform/community/raw/master/tutorials/cloudbuild-angular-universal/webpack.prerender.config.js >webpack.prerender.config.js
-
+     curl -L https://raw.githubusercontent.com/GoogleCloudPlatform/community/master/tutorials/cloudbuild-angular-universal/webpack.prerender.config.js > webpack.prerender.config.js
 2. Add the prerender webpack configuration file to git
 
      git add webpack.prerender.config.js
 
 3. Download the typescript config file for prerendering.
 
-    curl -L https://github.com/GoogleCloudPlatform/community/raw/master/tutorials/cloudbuild-prerender-angular-universal/prerender.tsconfig.json >prerender.tsconfig.json
+    curl -L https://raw.githubusercontent.com/GoogleCloudPlatform/community/master/tutorials/cloudbuild-angular-universal/prerender.tsconfig.json >prerender.tsconfig.json
 
 4. Add the prerender typscript file to git
 
@@ -150,19 +153,27 @@ rm tmpfile
     --target-http-proxy http-lb-proxy \
     --ports 80
 
-## Create the Cloudbuild file
+## Create the Cloudbuild file and add it to the git repsoitory
+
+1. Create the cloudbuild.yaml file
+
     cat <<CLOUDBUILD_FILE>cloudbuild.yaml
     steps:
     - id: install_packages
       name: 'gcr.io/cloud-builders/npm'
       args: ['install']
     - id: prerender_browser_files
-      name: 'gcr.io/cloudbuilders/npm'
+      name: 'gcr.io/cloud-builders/npm'
       args: ['build:prerender']
+      waitFor: install_packages
     - id: copy_prerendered_files
       name: 'gcr.io/cloud-builders/gsutil'
       args: ['cp','-r','dist/browser/*', '${_ANGULAR_APP_BUCKET_PATH}']
+      waitFor: prerender_browser_files
     CLOUDBUILD_FILE
+
+2. Add and commit it to the git repository.
+    git add cloudbuild.yaml && git commit -m "add cloudbuild.yaml"
 
 ### Create a Build Trigger that will build, test and deploy your application to the Cloud CDN
 You can create a trigger on the [build triggers page](https://console.cloud.google.com/cloud-build/triggers) of the GCP Console by following these steps:
@@ -173,6 +184,7 @@ You can create a trigger on the [build triggers page](https://console.cloud.goog
 1. Enter "angular-universal-tour" for Name."
 1. Set the trigger for "Tag".
 1. Set the build type to "cloudbuild.yaml"
+1. Add a substitution for _ANGULAR_APP_BUCKET_PATH set to gs://[PROJECT]-angular-app where [PROJECT] is the name of your project
 1. Click "Create Trigger"
 
 
@@ -195,7 +207,7 @@ You can create a trigger on the [build triggers page](https://console.cloud.goog
 
 2.  Push the repository to google
 
-    git push google master
+    git push google master && git push google --tags
 
 
 ### Once the build and deploy finishes check that the website is deployed
