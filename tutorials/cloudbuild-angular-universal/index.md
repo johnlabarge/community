@@ -8,7 +8,7 @@ date_published: 2018-11-08
 # Perform Angular Serverside (Pre-)Rendering via Cloud Build
 This tutorial will show you how to pre-generate server-side rendered Angular pages using Cloud Build.
 
-![ push new angular code to cloud source repository ](https://storage.googleapis.com/gcp-community/tutorials/pregenerate-angular-universal.png)
+![ push new angular code to cloud source repository ](angular-cloudbuild.png)
 
 ## Prerequisites
 
@@ -51,8 +51,8 @@ Fill in `[CONFIGURATION NAME]` with the name of hte configuration you want to us
     gcloud config configurations activate [CONFIGURATION NAME] #The configuration for the project you want to use
     PROJECT=$(gcloud config get-value project)
 
-### Enable the services required for the tutorial 
-    
+### Enable the services required for the tutorial
+
     gcloud services enable sourcerepo.googleapis.com
     gcloud services enable containerregistry.googleapis.com
 
@@ -160,10 +160,11 @@ rm tmpfile
 
 ## Create the Cloudbuild file and add it to the git repsoitory
 1. Give the cloudbuild cloud storage admin access
+```
 CLOUD_BUILD_ACCOUNT=$(gcloud projects get-iam-policy $PROJECT --filter="(bindings.role:roles/cloudbuild)"  --flatten="bindings[].members" --format="value(bindings.members[])")
 cloud projects add-iam-policy-binding $PROJECT   --member $CLOUD_BUILD_ACCOUNT  --role role
 s/storage.admin
-
+```
 2. Create the cloudbuild.yaml file
 ```
 cat <<CLOUDBUILD_FILE>cloudbuild.yaml
@@ -198,6 +199,7 @@ CLOUDBUILD_FILE
 ```
 
 2. Add and commit it to the git repository.
+
     git add cloudbuild.yaml && git commit -m "add cloudbuild.yaml"
 
 ### Create a Build Trigger that will build, test and deploy your application to the Cloud CDN
