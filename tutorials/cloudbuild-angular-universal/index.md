@@ -243,8 +243,13 @@ git push google master && git push google --tags
 ### Once the build and deploy finishes check that the website is deployed
 1.  Open up the [Cloud Build](https://console.cloud.google.com/cloud-build) console to show the build progress.
 2.  Find the build that is in progress and click the link to view its progress.
-3.  Once the build finishes, find the IP address of the load balancer you created above
-4.Point your browser at "http://$ANGULAR_APP_IP
+3.  Once the build finishes, find the IP address of the load balancer you created above:
+
+```
+$(gcloud compute addresses list  --filter="name=angular-app-ip" --format="value(address)")
+```
+
+4. Point your browser at "http://[ANGULAR_APP_IP]", replacing [ANGULAR_APP_IP] with the IP address retrieved above.
 
 ### Cleanup
 1. Delete the load balancer
