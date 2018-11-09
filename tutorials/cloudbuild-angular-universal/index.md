@@ -61,7 +61,6 @@ Fill in `[CONFIGURATION NAME]` with the name of the configuration you want to us
 1. Download and unzip the test application
 ```
 curl -L https://angular.io/generated/zips/universal/universal.zip > universal.zip
-
 unzip universal.zip -d angular-app
 cd angular-app
 ```
@@ -165,7 +164,7 @@ CLOUD_BUILD_ACCOUNT=$(gcloud projects get-iam-policy $PROJECT --filter="(binding
 cloud projects add-iam-policy-binding $PROJECT   --member $CLOUD_BUILD_ACCOUNT  --role role
 s/storage.admin
 ```
-2. Create the cloudbuild.yaml file
+2. Create the ```cloudbuild.yaml``` file
 ```
 cat <<CLOUDBUILD_FILE>cloudbuild.yaml
 steps:
