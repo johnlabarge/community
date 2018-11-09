@@ -99,7 +99,7 @@ git add prerender.tsconfig.json
 ```
 curl -L https://raw.githubusercontent.com/GoogleCloudPlatform/community/master/tutorials/cloudbuild-angular-universal/prerender.ts >prerender.ts
 ```
-6. Edit the package.json file to add the prerender steps
+6. Edit the package.json file to add the prerender steps.
 ```
 read -r -d '' SCRIPT_ADDITIONS <<EOF
 {
@@ -115,41 +115,41 @@ rm tmpfile
 ```
 **Note** that jq is a tool for editing JSON and is installed in Cloudshell by default. If you are going through this tutorial on your workstation see [jq installation](https://stedolan.github.io/jq/download/) for instructions on installing jq on your workstation.
 
-6. Add the package.json changes to git
+6. Add the package.json changes to git.
 ```
 git add package.json
 ```
 4. Commit your changes to the git repo
 ```
-git commit -m "pregenerate changes" 
+git commit -m "pregenerate changes"
 ```
 ### Configure a Cloud Storage Bucket and Cloud Load Balancer to host your Angular Application on Cloud CDN
 
-1. Create the content cloud storage bucket
+1. Create the content cloud storage bucket.
 ```
-gsutil mb gs://$PROJECT-angular-app 
+gsutil mb gs://$PROJECT-angular-app
 ```
-2. Create the backend-bucket
+2. Create the backend-bucket.
 ```
 gcloud compute backend-buckets create $PROJECT-angular-app-backend \
 --gcs-bucket-name=$PROJECT-angular-app \
 --enable-cdn
 ```
-3. Create a multi-regional ip address
+3. Create a multi-regional ip address.
 ```
 gcloud compute addresses create angular-app-ip --global
 ANGULAR_APP_IP=$(gcloud compute addresses list  --filter="name=angular-app-ip" --format="value(address)")
 ```
-3. Create the url map
+3. Create the url map.
 ```
 gcloud compute url-maps create web-map --default-backend-bucket $PROJECT-angular-app-backend
 ```
-4. Create the http proxy
+4. Create the http proxy.
 ```
 gcloud compute target-http-proxies create http-lb-proxy \
 --url-map web-map
 ```
-5. Create the forwarding rule
+5. Create the forwarding rule.
 ```
 gcloud compute forwarding-rules create http-content-rule \
 --address angular-app-ip \
@@ -158,13 +158,13 @@ gcloud compute forwarding-rules create http-content-rule \
 --ports 80
 ```
 ## Create the Cloudbuild file and add it to the git repsoitory
-1. Give the cloudbuild cloud storage admin access
+1. Give the cloudbuild cloud storage admin access.
 ```
 CLOUD_BUILD_ACCOUNT=$(gcloud projects get-iam-policy $PROJECT --filter="(bindings.role:roles/cloudbuild)"  --flatten="bindings[].members" --format="value(bindings.members[])")
 cloud projects add-iam-policy-binding $PROJECT   --member $CLOUD_BUILD_ACCOUNT  --role role
 s/storage.admin
 ```
-2. Create the ```cloudbuild.yaml``` file
+2. Create the ```cloudbuild.yaml``` file.
 ```
 cat <<CLOUDBUILD_FILE>cloudbuild.yaml
 steps:
@@ -229,12 +229,12 @@ https://source.developers.google.com/p/$PROJECT/r/tour-of-heros-universal
 
 ## Run the Build Trigger and Deploy the Application
 
-1.  Tag the repository
+1.  Tag the repository.
 ```
 git tag v0.0
 ```
 
-2.  Push the repository to google
+2.  Push the repository to google.
 ```
 git push google master && git push google --tags
 ```
@@ -251,7 +251,7 @@ $(gcloud compute addresses list  --filter="name=angular-app-ip" --format="value(
 4. Point your browser at "http://[ANGULAR_APP_IP]", replacing [ANGULAR_APP_IP] with the IP address retrieved above.
 
 ### Cleanup
-1. Delete the load balancer
+1. Delete the load balancer.
 
 ```
 gcloud compute forwarding-rules delete http-content-rule --global --quiet
@@ -263,13 +263,13 @@ gcloud compute url-maps delete web-map  --quiet
 gcloud compute addresses delete angular-app-ip --global --quiet
 ```
 
-2. Delete the cloud storage bucket
+2. Delete the cloud storage bucket.
 ```
 gcloud compute backend-buckets delete $PROJECT-angular-app-backend --quiet
 
 gsutil rb gs://$PROJECT-angular-app
 ```
-3. Delete the Cloud Source Repository
+3. Delete the Cloud Source Repository.
 ```
 gcloud source repos delete tour-of-heros-universal --quiet
 ```
