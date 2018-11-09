@@ -198,7 +198,7 @@ steps:
 CLOUDBUILD_FILE
 ```
 
-2. Add and commit it to the git repository.
+3. Add and commit ```cloudbuild.yaml``` to the git repository.
 ```
 git add cloudbuild.yaml && git commit -m "add cloudbuild.yaml"
 ```
