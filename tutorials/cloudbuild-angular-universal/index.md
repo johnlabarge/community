@@ -245,7 +245,7 @@ git push google master && git push google --tags
 3.  Once the build finishes, find the IP address of the load balancer you created above:
 
 ```
-$(gcloud compute addresses list  --filter="name=angular-app-ip" --format="value(address)")
+gcloud compute addresses list  --filter="name=angular-app-ip" --format="value(address)"
 ```
 
 4. Point your browser at "http://[ANGULAR_APP_IP]", replacing [ANGULAR_APP_IP] with the IP address retrieved above.
