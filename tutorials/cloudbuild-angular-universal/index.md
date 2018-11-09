@@ -83,7 +83,8 @@ git commit -m "first"
 1. Download the webpack prerender config file.
 
      curl -L https://raw.githubusercontent.com/GoogleCloudPlatform/community/master/tutorials/cloudbuild-angular-universal/webpack.prerender.config.js > webpack.prerender.config.js
-2. Add the prerender webpack configuration file to git
+
+2. Add the prerender webpack configuration file to git.
 
      git add webpack.prerender.config.js
 
@@ -91,17 +92,21 @@ git commit -m "first"
 
     curl -L https://raw.githubusercontent.com/GoogleCloudPlatform/community/master/tutorials/cloudbuild-angular-universal/prerender.tsconfig.json >prerender.tsconfig.json
 
-4. Add the prerender typscript file to git
+4. Add the prerender typscript file to git.
 
     git add prerender.tsconfig.json
 
-5. Edit the package.json file to add the prerender steps
+5. Download the prerender typescript file.
+
+    curl -L https://raw.githubusercontent.com/GoogleCloudPlatform/community/master/tutorials/cloudbuild-angular-universal/prerender.ts >prerender.ts
+
+6. Edit the package.json file to add the prerender steps
 ```
 read -r -d '' SCRIPT_ADDITIONS <<EOF
 {
 "build:prerender": "npm run build:client-and-server-bundles && npm run compile:prerender && npm run generate:prerender",
 "generate:prerender": "npm run webpack:prerender && node dist/prerender.js",
-"compile:prerender": "tsc -p server.tsconfig.json",
+"compile:prerender": "tsc -p prerender.tsconfig.json",
 "webpack:prerender": "webpack --config webpack.prerender.config.js"
 }
 EOF
@@ -123,7 +128,7 @@ rm tmpfile
 
 1. Create the content cloud storage bucket
 
-    gsutil mb gs://$PROJECT-angular-app
+    gsutil mb gs://$PROJECT-angular-app 
 
 2. Create the backend-bucket
 
@@ -154,22 +159,41 @@ rm tmpfile
     --ports 80
 
 ## Create the Cloudbuild file and add it to the git repsoitory
+1. Give the cloudbuild cloud storage admin access
+CLOUD_BUILD_ACCOUNT=$(gcloud projects get-iam-policy $PROJECT --filter="(bindings.role:roles/cloudbuild)"  --flatten="bindings[].members" --format="value(bindings.members[])")
+cloud projects add-iam-policy-binding $PROJECT   --member $CLOUD_BUILD_ACCOUNT  --role role
+s/storage.admin
 
-1. Create the cloudbuild.yaml file
+2. Create the cloudbuild.yaml file
 ```
 cat <<CLOUDBUILD_FILE>cloudbuild.yaml
 steps:
 - id: install_packages
   name: 'gcr.io/cloud-builders/npm'
-  args: ['install']
+  args:
+  - 'install'
 - id: prerender_browser_files
   name: 'gcr.io/cloud-builders/npm'
-  args: ['build:prerender']
-  waitFor: install_packages
+  args:
+  - 'run'
+  - 'build:prerender'
+  waitFor:
+  - install_packages
 - id: copy_prerendered_files
   name: 'gcr.io/cloud-builders/gsutil'
-  args: ['cp','-r','dist/browser/*', '${_ANGULAR_APP_BUCKET_PATH}']
-  waitFor: prerender_browser_files
+  args: ['cp','-r','dist/browser/*', '\${_ANGULAR_APP_BUCKET_PATH}']
+  waitFor:
+  - prerender_browser_files
+- id: set_website_configuration
+  name: 'gcr.io/cloud-builders/gsutil'
+  args: ['web', 'set', '-m', 'index.html','\${_ANGULAR_APP_BUCKET_PATH}']
+  waitFor:
+  - copy_prerendered_files
+- id: set_permissions_for_website_files
+  name: 'gcr.io/cloud-builders/gsutil'
+  args: ['acl','ch','-u','AllUsers:R','-r', '\${_ANGULAR_APP_BUCKET_PATH}']
+  waitFor:
+  - copy_prerendered_files
 CLOUDBUILD_FILE
 ```
 
@@ -224,7 +248,7 @@ git push google master && git push google --tags
 1. Delete the load balancer
 
 ```
-gcloud compute forwarding-rules delete http-content-rule --global
+gcloud compute forwarding-rules delete http-content-rule --global --quiet
 
 gcloud compute target-http-proxies delete http-lb-proxy --quiet
 
@@ -237,7 +261,7 @@ gcloud compute addresses delete angular-app-ip --global --quiet
 ```
 gcloud compute backend-buckets delete $PROJECT-angular-app-backend --quiet
 
-gcloud rb gs://$PROJECT-angular-app
+gsutil rb gs://$PROJECT-angular-app
 ```
 3. Delete the Cloud Source Repository
 ```
