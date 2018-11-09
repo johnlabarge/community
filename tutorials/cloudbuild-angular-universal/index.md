@@ -81,25 +81,25 @@ git commit -m "first"
 ### Make prerender changes to the angular application
 
 1. Download the webpack prerender config file.
-
-     curl -L https://raw.githubusercontent.com/GoogleCloudPlatform/community/master/tutorials/cloudbuild-angular-universal/webpack.prerender.config.js > webpack.prerender.config.js
-
+```
+curl -L https://raw.githubusercontent.com/GoogleCloudPlatform/community/master/tutorials/cloudbuild-angular-universal/webpack.prerender.config.js > webpack.prerender.config.js
+```
 2. Add the prerender webpack configuration file to git.
-
+```
      git add webpack.prerender.config.js
-
+```
 3. Download the typescript config file for prerendering.
-
-    curl -L https://raw.githubusercontent.com/GoogleCloudPlatform/community/master/tutorials/cloudbuild-angular-universal/prerender.tsconfig.json >prerender.tsconfig.json
-
+```
+curl -L https://raw.githubusercontent.com/GoogleCloudPlatform/community/master/tutorials/cloudbuild-angular-universal/prerender.tsconfig.json >prerender.tsconfig.json
+```
 4. Add the prerender typscript file to git.
-
-    git add prerender.tsconfig.json
-
+```
+git add prerender.tsconfig.json
+```
 5. Download the prerender typescript file.
-
-    curl -L https://raw.githubusercontent.com/GoogleCloudPlatform/community/master/tutorials/cloudbuild-angular-universal/prerender.ts >prerender.ts
-
+```
+curl -L https://raw.githubusercontent.com/GoogleCloudPlatform/community/master/tutorials/cloudbuild-angular-universal/prerender.ts >prerender.ts
+```
 6. Edit the package.json file to add the prerender steps
 ```
 read -r -d '' SCRIPT_ADDITIONS <<EOF
@@ -117,47 +117,47 @@ rm tmpfile
 **Note** that jq is a tool for editing JSON and is installed in Cloudshell by default. If you are going through this tutorial on your workstation see [jq installation](https://stedolan.github.io/jq/download/) for instructions on installing jq on your workstation.
 
 6. Add the package.json changes to git
-
-    git add package.json
-
+```
+git add package.json
+```
 4. Commit your changes to the git repo
-
-    git commit -m "pregenerate changes" 
-
+```
+git commit -m "pregenerate changes" 
+```
 ### Configure a Cloud Storage Bucket and Cloud Load Balancer to host your Angular Application on Cloud CDN
 
 1. Create the content cloud storage bucket
-
-    gsutil mb gs://$PROJECT-angular-app 
-
+```
+gsutil mb gs://$PROJECT-angular-app 
+```
 2. Create the backend-bucket
-
-    gcloud compute backend-buckets create $PROJECT-angular-app-backend \
-    --gcs-bucket-name=$PROJECT-angular-app \
-    --enable-cdn
-
+```
+gcloud compute backend-buckets create $PROJECT-angular-app-backend \
+--gcs-bucket-name=$PROJECT-angular-app \
+--enable-cdn
+```
 3. Create a multi-regional ip address
-
-    gcloud compute addresses create angular-app-ip --global
-    ANGULAR_APP_IP=$(gcloud compute addresses list  --filter="name=angular-app-ip" --format="value(address)")
-
+```
+gcloud compute addresses create angular-app-ip --global
+ANGULAR_APP_IP=$(gcloud compute addresses list  --filter="name=angular-app-ip" --format="value(address)")
+```
 3. Create the url map
-
-    gcloud compute url-maps create web-map --default-backend-bucket $PROJECT-angular-app-backend
-
+```
+gcloud compute url-maps create web-map --default-backend-bucket $PROJECT-angular-app-backend
+```
 4. Create the http proxy
-
-    gcloud compute target-http-proxies create http-lb-proxy \
-    --url-map web-map
-
+```
+gcloud compute target-http-proxies create http-lb-proxy \
+--url-map web-map
+```
 5. Create the forwarding rule
-
-    gcloud compute forwarding-rules create http-content-rule \
-    --address angular-app-ip \
-    --global \
-    --target-http-proxy http-lb-proxy \
-    --ports 80
-
+```
+gcloud compute forwarding-rules create http-content-rule \
+--address angular-app-ip \
+--global \
+--target-http-proxy http-lb-proxy \
+--ports 80
+```
 ## Create the Cloudbuild file and add it to the git repsoitory
 1. Give the cloudbuild cloud storage admin access
 ```
@@ -199,9 +199,9 @@ CLOUDBUILD_FILE
 ```
 
 2. Add and commit it to the git repository.
-
-    git add cloudbuild.yaml && git commit -m "add cloudbuild.yaml"
-
+```
+git add cloudbuild.yaml && git commit -m "add cloudbuild.yaml"
+```
 ### Create a Build Trigger that will build, test and deploy your application to the Cloud CDN
 You can create a trigger on the [build triggers page](https://console.cloud.google.com/cloud-build/triggers) of the GCP Console by following these steps:
 
