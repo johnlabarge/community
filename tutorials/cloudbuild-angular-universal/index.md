@@ -1,12 +1,12 @@
 ---
-title: Perform Angular Serverside Rendering via Cloud Build
+title: Perform Angular Serverside (Pre-)Rendering via Cloud Build
 description: Learn how to use Cloud Build to pre-generate your html for Angular
 author: johnlabarge
 tags: Cloud Build, Angular Universal
 date_published: 2018-11-08
 ---
-
-This tutorial will show you how to pre-generate server-side rendered angular pages using Cloud Build.
+# Perform Angular Serverside (Pre-)Rendering via Cloud Build
+This tutorial will show you how to pre-generate server-side rendered Angular pages using Cloud Build.
 
 ![ push new angular code to cloud source repository ](https://storage.googleapis.com/gcp-community/tutorials/pregenerate-angular-universal.png)
 
