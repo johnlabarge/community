@@ -14,11 +14,10 @@ This tutorial will show you how to pre-generate [server-side rendered Angular pa
 
 ## Prerequisites
 
-1.  A Google Cloud account
-1.  At least project editor access to an existing project
-1.  Or organization permissions to create a new project in an existing
-    organization [get a trial account here](https://console.cloud.google.com/freetrial?authuser=2&_ga=2.213928212.-2042919442.1528299768&_gac=1.89261801.1536929612.CjwKCAjwuO3cBRAyEiwAzOxKslw2lWJAN82nAhsu1azihQgX_7aQjek2MPEjanoAwKL5g70Rp0b9zRoCgFwQAvD_BwE)
-
+1.  A Google Cloud account  [get a trial account here](https://console.cloud.google.com/freetrial?authuser=2&_ga=2.213928212.-2042919442.1528299768&_gac=1.89261801.1536929612.CjwKCAjwuO3cBRAyEiwAzOxKslw2lWJAN82nAhsu1azihQgX_7aQjek2MPEjanoAwKL5g70Rp0b9zRoCgFwQAvD_BwE)
+1.  The necessary permissions; either:
+    1. **Project editor** access to an existing project
+    1. **Create a new project** permissions in an existing organization
 ## (OPTIONAL) Create a project with a billing account attached
 
 This task will help you setup a new GCP project in which to run your packer
@@ -57,6 +56,7 @@ Fill in `[CONFIGURATION NAME]` with the name of the configuration you want to us
 
     gcloud services enable sourcerepo.googleapis.com
     gcloud services enable containerregistry.googleapis.com
+    gcloud services enable cloudbuild.googleapis.com
 
 ## Download the Test Angular Application, Tour of Heros
 
@@ -66,8 +66,7 @@ curl -L https://angular.io/generated/zips/universal/universal.zip > universal.zi
 unzip universal.zip -d angular-app
 cd angular-app
 ```
-
-1. Create a local git repo for the sample code
+2. Create a local git repo for the sample code
 ```
 curl -L https://github.com/angular/angular/blob/master/.gitignore > .gitignore
 git init
@@ -76,32 +75,47 @@ git commit -m "first"
 ```
 
 ### Create a Cloud Source Repository for your copy of the test Angular Application
+You will create a repository called `tour-of-heros-universal`
 
     gcloud source repos create tour-of-heros-universal
 
 ### Make prerender changes to the angular application
 
+0. Store github url in environment variable:
+```
+URL=https://raw.githubusercontent.com/GoogleCloudPlatform/community/master/tutorials/cloudbuild-angular-universal
+URL=https://raw.githubusercontent.com/johnlabarge/community/master/tutorials/cloudbuild-angular-universal
+```
+
 1. Download the webpack prerender config file.
 ```
-curl -L https://raw.githubusercontent.com/GoogleCloudPlatform/community/master/tutorials/cloudbuild-angular-universal/webpack.prerender.config.js > webpack.prerender.config.js
+curl -LO $URL/webpack.prerender.config.js 
 ```
+
 2. Add the prerender webpack configuration file to git.
 ```
-     git add webpack.prerender.config.js
+git add webpack.prerender.config.js
 ```
 3. Download the typescript config file for prerendering.
 ```
-curl -L https://raw.githubusercontent.com/GoogleCloudPlatform/community/master/tutorials/cloudbuild-angular-universal/prerender.tsconfig.json >prerender.tsconfig.json
+curl -LO $URL/prerender.tsconfig.json
 ```
-4. Add the prerender typscript file to git.
+4. Add the  typescript config file for prerendering.
 ```
 git add prerender.tsconfig.json
 ```
 5. Download the prerender typescript file.
 ```
-curl -L https://raw.githubusercontent.com/GoogleCloudPlatform/community/master/tutorials/cloudbuild-angular-universal/prerender.ts >prerender.ts
+curl -LO $URL/prerender.ts
 ```
-6. Edit the package.json file to add the prerender steps.
+5b. Add the prerender typscript file to git (?)
+```
+git add prerender.ts
+```
+
+6. Modify the package.json file to add the prerender steps.
+
+**Note** that jq is a tool for editing JSON and is installed in Cloudshell by default. If you are going through this tutorial on your workstation see [jq installation](https://stedolan.github.io/jq/download/) for instructions on installing jq on your workstation.
 ```
 read -r -d '' SCRIPT_ADDITIONS <<EOF
 {
@@ -115,7 +129,6 @@ cat package.json | jq --argjson additions "$SCRIPT_ADDITIONS" '.scripts = .scrip
 cp tmpfile package.json
 rm tmpfile
 ```
-**Note** that jq is a tool for editing JSON and is installed in Cloudshell by default. If you are going through this tutorial on your workstation see [jq installation](https://stedolan.github.io/jq/download/) for instructions on installing jq on your workstation.
 
 6. Add the package.json changes to git.
 ```
@@ -163,8 +176,7 @@ gcloud compute forwarding-rules create http-content-rule \
 1. Give the cloudbuild cloud storage admin access.
 ```
 CLOUD_BUILD_ACCOUNT=$(gcloud projects get-iam-policy $PROJECT --filter="(bindings.role:roles/cloudbuild)"  --flatten="bindings[].members" --format="value(bindings.members[])")
-cloud projects add-iam-policy-binding $PROJECT   --member $CLOUD_BUILD_ACCOUNT  --role role
-s/storage.admin
+gcloud projects add-iam-policy-binding $PROJECT   --member $CLOUD_BUILD_ACCOUNT  --role roles/storage.admin
 ```
 2. Create the ```cloudbuild.yaml``` file.
 ```
@@ -206,19 +218,19 @@ git add cloudbuild.yaml && git commit -m "add cloudbuild.yaml"
 ### Create a Build Trigger that will build, test and deploy your application to the Cloud CDN
 You can create a trigger on the [build triggers page](https://console.cloud.google.com/cloud-build/triggers) of the GCP Console by following these steps:
 
-1. Click **"Create Trigger"**
+1. Click **"Add Trigger"**
 1. Select "Cloud Source Repository" Click "Continue".
 1. Select "tour-of-heroes-universal" and click "Continue"
 1. Enter "angular-universal-tour" for Name."
-1. Set the trigger for "Tag".
-1. Set the build type to "cloudbuild.yaml"
+1. Set the Trigger type to "Tag".
+1. Set the Build configuration to "cloudbuild.yaml"
 1. Add a substitution for _ANGULAR_APP_BUCKET_PATH set to gs://[PROJECT]-angular-app where [PROJECT] is the name of your project
 1. Click "Create Trigger"
 
 
 ### Add your tour-of-heros cloud source repository as a remote repository with the name 'google'
 
-1.  (Only if not running in Cloud Shell) Set up your google credentials for git.
+1.  (**OPTIONAL**: Only if not running in Cloud Shell) Set up your google credentials for git.
 ```
 gcloud init && git config --global credential.https://source.developers.google.com.helper gcloud.sh
 ```
@@ -269,10 +281,24 @@ gcloud compute addresses delete angular-app-ip --global --quiet
 ```
 gcloud compute backend-buckets delete $PROJECT-angular-app-backend --quiet
 
+gsutil rm gs://$PROJECT-angular-app/**
 gsutil rb gs://$PROJECT-angular-app
 ```
-3. Delete the Cloud Source Repository.
+3. Delete the Build Trigger
+
+    1. Navigate to [build triggers page](https://console.cloud.google.com/cloud-build/triggers) of the GCP Console 
+    1. On the line of the build trigger "tour-of-heroes-universal", select the vertical ellipsis(?)
+    1. Select "Delete"
+
+
+4. Delete the Cloud Source Repository.
 ```
 gcloud source repos delete tour-of-heros-universal --quiet
+```
+5. (OPTIONAL) Disable APIs
+```
+gcloud services disable sourcerepo.googleapis.com
+gcloud services disable containerregistry.googleapis.com
+gcloud services disable cloudbuild.googleapis.com
 ```
 
