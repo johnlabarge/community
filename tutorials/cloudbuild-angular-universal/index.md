@@ -53,6 +53,7 @@ Fill in `[CONFIGURATION NAME]` with the name of the configuration you want to us
 
 ### Enable the services required for the tutorial
 
+    gcloud services enable compute.googleapis.com
     gcloud services enable sourcerepo.googleapis.com
     gcloud services enable containerregistry.googleapis.com
     gcloud services enable cloudbuild.googleapis.com
@@ -109,7 +110,8 @@ git add prerender.ts
 7. Modify the package.json file to add the prerender steps.
 
 **Note** that jq is a tool for editing JSON and is installed in Cloudshell by default. If you are going through this tutorial on your workstation see [jq installation](https://stedolan.github.io/jq/download/) for instructions on installing jq on your workstation.
-```
+
+```bash
 read -r -d '' SCRIPT_ADDITIONS <<EOF
 {
 "build:prerender": "npm run build:client-and-server-bundles && npm run compile:prerender && npm run generate:prerender",
@@ -167,12 +169,14 @@ gcloud compute forwarding-rules create http-content-rule \
 ```
 ## Create the Cloudbuild file and add it to the git repsoitory
 1. Give the cloudbuild cloud storage admin access.
-```
+
+```bash
 CLOUD_BUILD_ACCOUNT=$(gcloud projects get-iam-policy $PROJECT --filter="(bindings.role:roles/cloudbuild)"  --flatten="bindings[].members" --format="value(bindings.members[])")
 gcloud projects add-iam-policy-binding $PROJECT   --member $CLOUD_BUILD_ACCOUNT  --role roles/storage.admin
 ```
 2. Create the ```cloudbuild.yaml``` file.
-```
+
+```bash
 cat <<CLOUDBUILD_FILE>cloudbuild.yaml
 steps:
 - id: install_packages
@@ -211,13 +215,14 @@ git add cloudbuild.yaml && git commit -m "add cloudbuild.yaml"
 ### Create a Build Trigger that will build, test and deploy your application to the Cloud CDN
 You can create a trigger on the [build triggers page](https://console.cloud.google.com/cloud-build/triggers) of the GCP Console by following these steps:
 
-1. Click **Add Trigger**
+1. Click **Create Trigger** OR **Add Trigger** button
 1. Select **Cloud Source Repository** Click **Continue**.
 1. Select ```tour-of-heroes-universal``` and click **Continue**.
 1. Enter ```angular-universal-tour``` for **Name.**
-1. Set the Trigger type to "Tag".
-1. Set the **Build configuration** to ```cloudbuild.yaml```
-1. Add a substitution for ```_ANGULAR_APP_BUCKET_PATH``` set to ```gs://[PROJECT]-angular-app``` where ```[PROJECT]``` is the name of your project
+1. Under **Trigger type** select "Tag".
+1. Under **Build configuration** select ```cloudbuild.yaml```
+1. Under **Substitution variables** press **+ Add item**
+1. In the **Variable** field enter```_ANGULAR_APP_BUCKET_PATH``` and in **Value** enter ```gs://[PROJECT]-angular-app``` where ```[PROJECT]``` is the name of your project
 1. Click **Create Trigger**
 
 ### Add your tour-of-heros cloud source repository as a remote repository with the name 'google'
